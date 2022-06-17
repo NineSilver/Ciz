@@ -1,0 +1,3 @@
+proc Main () do
+    ret;
+end
