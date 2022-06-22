@@ -1,0 +1,80 @@
+#include <stdio.h>
+
+#include <dump.h>
+
+static void do_indent(FILE* stream, size_t indent)
+{
+    while(indent-- > 0) fputc(' ', stream);
+}
+
+static void dump_value(FILE* stream, ast_value_t value, size_t indent)
+{
+    switch(value.type)
+    {
+        case AST_VAL_UNSIGNED:
+            do_indent(stream, indent);
+            fprintf(stream, "-> %u\n", value._unsigned);
+            break;
+        
+        default:
+            do_indent(stream, indent);
+            fprintf(stream, "-> ???\n");
+            fprintf(stderr, "WARN: value type %d does not have a dump case\n", value.type);
+            break;
+    }
+}
+
+static void dump_expression(FILE* stream, ast_expression_t* expression, size_t indent)
+{
+    switch (expression->type)
+    {
+        case AST_EXPR_VALUE:
+            dump_value(stream, expression->value, indent);
+            break;
+        
+        default:
+            do_indent(stream, indent);
+            fprintf(stream, "-> ???\n");
+            fprintf(stderr, "WARN: expression type %d does not have a dump case\n", expression->type);
+            break;
+    }
+}
+
+static void dump_statement(FILE* stream, ast_statement_t* statement, size_t indent)
+{
+    switch(statement->type)
+    {
+        case AST_STMNT_BLOCK:
+            for(size_t i = 0; i < statement->block.statement_num; i++)
+                dump_statement(stream, statement->block.statements[i], indent + 2);
+            
+            break;
+
+        case AST_STMNT_RET:
+            do_indent(stream, indent);
+            fprintf(stream, "-> ret\n");
+            break;
+
+        case AST_STMNT_EXPR:
+            dump_expression(stream, statement->expr, indent);
+            break;
+        
+        default:
+            do_indent(stream, indent);
+            fprintf(stream, "-> ???\n");
+            fprintf(stderr, "WARN: statement type %d does not have a dump case\n", statement->type);
+            break;
+    }
+}
+
+static void dump_proc(FILE* stream, ast_proc_t proc)
+{
+    fprintf(stream, "proc %.*s:\n", (int)proc.name.len, proc.name.str);
+    dump_statement(stream, proc.body, 1);
+}
+
+void dump_ast(FILE* stream, ast_program_t* program)
+{
+    for(size_t i = 0; i < program->procnum; i++)
+        dump_proc(stream, program->procs[i]);
+}

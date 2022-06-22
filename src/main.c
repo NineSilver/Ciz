@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <dump.h>
 #include <file.h>
 #include <strview.h>
 
 #include "lexer/lexer.h"
+#include "parser/ast.h"
+#include "parser/parser.h"
 
 static void usage(char* argv0)
 {
@@ -24,10 +27,10 @@ int main(int argc, char* argv[])
     if(!file) return -1;
 
     lexer_t lexer = lexer_create(strview_from_arr_len(file, len));
-    token_t tok;
+    parser_t parser = parser_create(&lexer);
 
-    while((tok = lexer_next_token(&lexer)).kind != TOK_EOF)
-        token_print(stdout, tok);
+    ast_program_t program = parser_parse(&parser);
+    dump_ast(stdout, &program);
     
     free(file);
 
