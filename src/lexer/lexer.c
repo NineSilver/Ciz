@@ -1,38 +1,12 @@
 #include <ctype.h>
 #include <stdio.h>
 
+#include <dump.h>
+
 #include "lexer.h"
 
 #define isident(c) (isalpha((c)) || (c) == '_')
 #define isident_later(c) (isalnum((c)) || (c) == '_' || (c) == '$')
-
-static const char* tok_kind_to_str[16] = {
-    [TOK_PROC_KW] = "proc keyword",
-    [TOK_DO_KW] = "do keyword",
-    [TOK_END_KW] = "end keyword",
-    [TOK_RET_KW] = "ret keyword",
-
-    [TOK_IDENTIFIER] = "identifier",
-    [TOK_NUMBER] = "number",
-
-    [TOK_AS] = "as operator",
-    [TOK_PLUS] = "plus operator",
-    [TOK_MINUS] = "minus operator",
-    [TOK_STAR] = "star",
-    [TOK_SLASH] = "slash",
-
-    [TOK_LPAREN] = "left parentheses",
-    [TOK_RPAREN] = "right parentheses",
-    [TOK_SEMICOLON] = "semicolon",
-
-    [TOK_UNKNOWN] = "unknown token",
-    [TOK_EOF] = "end-of-file token"
-};
-
-const char* token_kind_to_str(tok_kind_t kind)
-{
-    return tok_kind_to_str[kind];
-}
 
 static tok_kind_t check_token_keyword(strview_t text)
 {
@@ -60,7 +34,7 @@ static token_t token_create(tok_kind_t kind, strview_t text, size_t line, size_t
 
 void token_print(FILE* fp, token_t tok)
 {
-    fprintf(fp, "Token %s (%d) \"%.*s\" at (%ld:%ld)\n", tok_kind_to_str[tok.kind], tok.kind, (int)tok.text.len, tok.text.str, tok.line, tok.column);
+    fprintf(fp, "Token %s (%d) \"%.*s\" at (%ld:%ld)\n", token_kind_to_str(tok.kind), tok.kind, (int)tok.text.len, tok.text.str, tok.line, tok.column);
 }
 
 lexer_t lexer_create(strview_t src)

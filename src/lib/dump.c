@@ -2,6 +2,34 @@
 
 #include <dump.h>
 
+static const char* tok_kind_to_str[16] = {
+    [TOK_PROC_KW] = "proc keyword",
+    [TOK_DO_KW] = "do keyword",
+    [TOK_END_KW] = "end keyword",
+    [TOK_RET_KW] = "ret keyword",
+
+    [TOK_IDENTIFIER] = "identifier",
+    [TOK_NUMBER] = "number",
+
+    [TOK_AS] = "as operator",
+    [TOK_PLUS] = "plus operator",
+    [TOK_MINUS] = "minus operator",
+    [TOK_STAR] = "star",
+    [TOK_SLASH] = "slash",
+
+    [TOK_LPAREN] = "left parentheses",
+    [TOK_RPAREN] = "right parentheses",
+    [TOK_SEMICOLON] = "semicolon",
+
+    [TOK_UNKNOWN] = "unknown token",
+    [TOK_EOF] = "end-of-file token"
+};
+
+const char* token_kind_to_str(tok_kind_t kind)
+{
+    return tok_kind_to_str[kind];
+}
+
 static void do_indent(FILE* stream, size_t indent)
 {
     while(indent-- > 0) fputc(' ', stream);
