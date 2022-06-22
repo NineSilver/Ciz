@@ -30,6 +30,11 @@ const char* token_kind_to_str(tok_kind_t kind)
     return tok_kind_to_str[kind];
 }
 
+void token_print(FILE* fp, token_t tok)
+{
+    fprintf(fp, "Token %s (%d) \"%.*s\" at (%lu:%lu)\n", token_kind_to_str(tok.kind), tok.kind, (int)tok.text.len, tok.text.str, tok.line, tok.column);
+}
+
 static void do_indent(FILE* stream, size_t indent)
 {
     while(indent-- > 0) fputc(' ', stream);

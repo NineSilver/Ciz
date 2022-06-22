@@ -32,11 +32,6 @@ static token_t token_create(tok_kind_t kind, strview_t text, size_t line, size_t
     };
 }
 
-void token_print(FILE* fp, token_t tok)
-{
-    fprintf(fp, "Token %s (%d) \"%.*s\" at (%ld:%ld)\n", token_kind_to_str(tok.kind), tok.kind, (int)tok.text.len, tok.text.str, tok.line, tok.column);
-}
-
 lexer_t lexer_create(strview_t src)
 {
     return (lexer_t){

@@ -18,7 +18,7 @@ parser_t parser_create(lexer_t* lexer)
         }
         else
         {
-            fprintf(stderr, "ERROR: unknown token \"%.*s\" at %ld:%ld\n", (int)tok.text.len, tok.text.str, tok.line, tok.column);
+            fprintf(stderr, "ERROR: unknown token \"%.*s\" at %lu:%lu\n", (int)tok.text.len, tok.text.str, tok.line, tok.column);
             fprintf(stderr, "Note: make sure your program does not contain unicode characters such as symbols or emoji.\n");
         }
     }
@@ -48,7 +48,7 @@ static void parser_expect(parser_t* parser, tok_kind_t kind)
     token_t expected = parser_peek(parser, 1);
     if(expected.kind != kind)
     {
-        fprintf(stderr, "ERROR: expected token %s, found token %s (%ld:%ld)\n", token_kind_to_str(kind), token_kind_to_str(expected.kind), expected.line, expected.column);
+        fprintf(stderr, "ERROR: expected token %s, found token %s (%lu:%lu)\n", token_kind_to_str(kind), token_kind_to_str(expected.kind), expected.line, expected.column);
         exit(-1);
     }
 }
@@ -58,7 +58,7 @@ static void parser_eat(parser_t* parser, tok_kind_t kind)
     token_t current = parser_current(parser);
     if(current.kind != kind)
     {
-        fprintf(stderr, "ERROR: expected token %s, found token %s (%ld:%ld)\n", token_kind_to_str(kind), token_kind_to_str(current.kind), current.line, current.column);
+        fprintf(stderr, "ERROR: expected token %s, found token %s (%lu:%lu)\n", token_kind_to_str(kind), token_kind_to_str(current.kind), current.line, current.column);
         exit(-1);
     }
     parser_advance(parser);
