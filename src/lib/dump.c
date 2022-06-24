@@ -25,6 +25,30 @@ static const char* tok_kind_to_str[16] = {
     [TOK_EOF] = "end-of-file token"
 };
 
+static const char* op_to_sign(tok_kind_t op)
+{
+    switch(op)
+    {
+        case TOK_AS:
+            return "::";
+
+        case TOK_PLUS:
+            return "+";
+
+        case TOK_MINUS:
+            return "-";
+
+        case TOK_STAR:
+            return "*";
+
+        case TOK_SLASH:
+            return "/";
+        
+        default:
+            return "no-op";
+    }
+};
+
 const char* token_kind_to_str(tok_kind_t kind)
 {
     return tok_kind_to_str[kind];
@@ -64,7 +88,14 @@ static void dump_expression(FILE* stream, ast_expression_t* expression, size_t i
         case AST_EXPR_VALUE:
             dump_value(stream, expression->value, indent);
             break;
-        
+
+        case AST_EXPR_BINARY:
+            do_indent(stream, indent);
+            fprintf(stream, "-> %s\n", op_to_sign(expression->binary.op));
+            dump_expression(stream, expression->binary.left, indent + 2);
+            dump_expression(stream, expression->binary.right, indent + 2);
+            break;
+
         default:
             do_indent(stream, indent);
             fprintf(stream, "-> ???\n");

@@ -3,6 +3,8 @@
 
 #include <strview.h>
 
+#include "../lexer/lexer.h"
+
 typedef enum ast_val_type
 {
     AST_VAL_UNSIGNED
@@ -19,15 +21,24 @@ typedef struct ast_value
 
 typedef enum ast_expr
 {
-    AST_EXPR_VALUE
+    AST_EXPR_VALUE,
+    AST_EXPR_BINARY
 } ast_expr_type_t;
 
+typedef struct ast_expression ast_expression_t;
 typedef struct ast_expression
 {
     ast_expr_type_t type;
     union
     {
         ast_value_t value;
+        
+        struct
+        {
+            tok_kind_t op;
+            ast_expression_t* left;
+            ast_expression_t* right;
+        } binary;
     };
 } ast_expression_t;
 

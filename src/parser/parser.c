@@ -64,25 +64,84 @@ static void parser_eat(parser_t* parser, tok_kind_t kind)
     parser_advance(parser);
 }
 
-static ast_expression_t* parser_parse_expression(parser_t* parser)
-{
-    token_t current = parser_current(parser);
-    ast_expression_t* expression = calloc(1, sizeof(ast_expression_t));
+static ast_expression_t* parser_parse_expression_0(parser_t* parser);
 
+static ast_expression_t* parser_parse_expression_2(parser_t* parser)
+{
+    if(parser_current(parser).kind == TOK_LPAREN)
+    {
+        parser_advance(parser);
+        ast_expression_t* expr = parser_parse_expression_0(parser);
+        parser_eat(parser, TOK_RPAREN);
+
+        return expr;
+    }
+
+    ast_expression_t* expression = calloc(1, sizeof(ast_expression_t));
+    token_t current = parser_current(parser);
     switch(current.kind)
     {
         case TOK_NUMBER:
             expression->type = AST_EXPR_VALUE;
             expression->value.type = AST_VAL_UNSIGNED;
             expression->value._unsigned = strtoul(current.text.str, NULL, 10);
-            break;
+            parser_advance(parser);
+            return expression;
         
         default:
-            fprintf(stderr, "TODO\n");
+            fprintf(stderr, "TODO %s\n", token_kind_to_str(current.kind));
             exit(-1);
     }
+}
 
-    return expression;
+static ast_expression_t* parser_parse_expression_1(parser_t* parser)
+{
+    ast_expression_t* left = parser_parse_expression_2(parser);
+
+    while(parser_current(parser).kind == TOK_STAR || parser_current(parser).kind == TOK_SLASH)
+    {
+        tok_kind_t op = parser_current(parser).kind;
+        parser_advance(parser);
+
+        ast_expression_t* right = parser_parse_expression_2(parser);
+
+        ast_expression_t* expr = calloc(1, sizeof(ast_expression_t));
+        expr->type = AST_EXPR_BINARY;
+        expr->binary.left = left;
+        expr->binary.right = right;
+        expr->binary.op = op;
+
+        left = expr;
+    }
+
+    return left;
+}
+
+static ast_expression_t* parser_parse_expression_0(parser_t* parser)
+{
+    ast_expression_t* left = parser_parse_expression_1(parser);
+    while(parser_current(parser).kind == TOK_PLUS || parser_current(parser).kind == TOK_MINUS)
+    {
+        tok_kind_t op = parser_current(parser).kind;
+        parser_advance(parser);
+
+        ast_expression_t* right = parser_parse_expression_1(parser);
+
+        ast_expression_t* expr = calloc(1, sizeof(ast_expression_t));
+        expr->type = AST_EXPR_BINARY;
+        expr->binary.left = left;
+        expr->binary.right = right;
+        expr->binary.op = op;
+
+        left = expr;
+    }
+
+    return left;
+}
+
+static ast_expression_t* parser_parse_expression(parser_t* parser)
+{
+    return parser_parse_expression_0(parser);
 }
 
 static ast_statement_t* parser_parse_statement(parser_t* parser);
@@ -135,6 +194,7 @@ static ast_statement_t* parser_parse_statement(parser_t* parser)
             ast_statement_t* expr = calloc(1, sizeof(ast_statement_t));
             expr->type = AST_STMNT_EXPR;
             expr->expr = parser_parse_expression(parser);
+            parser_advance(parser);
             return expr;
     }
 }
