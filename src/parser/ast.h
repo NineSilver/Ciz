@@ -46,6 +46,7 @@ typedef enum ast_stmnt_type
 {
     AST_STMNT_BLOCK,
     AST_STMNT_RET,
+    AST_STMNT_VAR_DECL,
     AST_STMNT_EXPR
 } ast_stmnt_type_t;
 
@@ -65,6 +66,12 @@ struct ast_statement
         {
             ast_expression_t* expr; 
         } ret;
+
+        struct
+        {
+            strview_t name;
+            ast_expression_t* value;
+        } var_decl;
 
         ast_expression_t* expr;
     };

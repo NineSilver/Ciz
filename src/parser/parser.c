@@ -146,6 +146,24 @@ static ast_expression_t* parser_parse_expression(parser_t* parser)
 
 static ast_statement_t* parser_parse_statement(parser_t* parser);
 
+static ast_statement_t* parser_parse_var_decl(parser_t* parser)
+{
+    parser_expect(parser, TOK_IDENTIFIER);
+    parser_advance(parser); // eat dim keyword without checking kind
+    
+    ast_statement_t* dim = calloc(1, sizeof(ast_statement_t));
+    dim->type = AST_STMNT_VAR_DECL;
+    dim->var_decl.name = parser_current(parser).text;
+    
+    parser_advance(parser);
+    parser_eat(parser, TOK_EQUALS);
+
+    dim->var_decl.value = parser_parse_expression(parser);
+    parser_eat(parser, TOK_SEMICOLON);
+
+    return dim;
+}
+
 static ast_statement_t* parser_parse_ret(parser_t* parser)
 {
     parser_advance(parser);
@@ -190,11 +208,14 @@ static ast_statement_t* parser_parse_statement(parser_t* parser)
         case TOK_RET_KW:
             return parser_parse_ret(parser);
         
+        case TOK_DIM_KW:
+            return parser_parse_var_decl(parser);
+        
         default:
             ast_statement_t* expr = calloc(1, sizeof(ast_statement_t));
             expr->type = AST_STMNT_EXPR;
             expr->expr = parser_parse_expression(parser);
-            parser_advance(parser);
+            parser_eat(parser, TOK_SEMICOLON);
             return expr;
     }
 }

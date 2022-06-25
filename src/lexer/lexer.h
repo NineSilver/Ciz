@@ -11,6 +11,7 @@ typedef enum tok_kind
     TOK_DO_KW,
     TOK_END_KW,
     TOK_RET_KW,
+    TOK_DIM_KW,
 
     TOK_IDENTIFIER,
     TOK_NUMBER,
@@ -20,6 +21,8 @@ typedef enum tok_kind
     TOK_MINUS,
     TOK_STAR,
     TOK_SLASH,
+
+    TOK_EQUALS,
 
     TOK_LPAREN,
     TOK_RPAREN,

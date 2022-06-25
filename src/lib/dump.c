@@ -2,11 +2,12 @@
 
 #include <dump.h>
 
-static const char* tok_kind_to_str[16] = {
+static const char* tok_kind_to_str[18] = {
     [TOK_PROC_KW] = "proc keyword",
     [TOK_DO_KW] = "do keyword",
     [TOK_END_KW] = "end keyword",
     [TOK_RET_KW] = "ret keyword",
+    [TOK_DIM_KW] = "dim keyword",
 
     [TOK_IDENTIFIER] = "identifier",
     [TOK_NUMBER] = "number",
@@ -16,6 +17,8 @@ static const char* tok_kind_to_str[16] = {
     [TOK_MINUS] = "minus operator",
     [TOK_STAR] = "star",
     [TOK_SLASH] = "slash",
+
+    [TOK_EQUALS] = "equals",
 
     [TOK_LPAREN] = "left parentheses",
     [TOK_RPAREN] = "right parentheses",
@@ -117,6 +120,12 @@ static void dump_statement(FILE* stream, ast_statement_t* statement, size_t inde
         case AST_STMNT_RET:
             do_indent(stream, indent);
             fprintf(stream, "-> ret\n");
+            break;
+
+        case AST_STMNT_VAR_DECL:
+            do_indent(stream, indent);
+            fprintf(stream, "-> dim %.*s\n", (int)statement->var_decl.name.len, statement->var_decl.name.str);
+            dump_expression(stream, statement->var_decl.value, indent + 2);
             break;
 
         case AST_STMNT_EXPR:

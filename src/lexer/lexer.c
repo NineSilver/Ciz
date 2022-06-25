@@ -18,6 +18,8 @@ static tok_kind_t check_token_keyword(strview_t text)
         return TOK_END_KW;
     else if(strview_compare(text, strview_from_arr_len("ret", 3)))
         return TOK_RET_KW;
+    else if(strview_compare(text, strview_from_arr_len("dim", 3)))
+        return TOK_DIM_KW;
     else
         return TOK_IDENTIFIER;
 }
@@ -112,6 +114,10 @@ token_t lexer_next_token(lexer_t* lexer)
         case '/':
             lexer_advance(lexer);
             return token_create(TOK_SLASH, strview_from_arr_len("/", 1), line, column);
+
+        case '=':
+            lexer_advance(lexer);
+            return token_create(TOK_EQUALS, strview_from_arr_len("=", 1), line, column);
 
         case ':':
             if(lexer_peek(lexer, 1) == ':')
