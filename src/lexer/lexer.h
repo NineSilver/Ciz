@@ -12,6 +12,8 @@ typedef enum tok_kind
     TOK_END_KW,
     TOK_RET_KW,
     TOK_DIM_KW,
+    TOK_IF_KW,
+    TOK_ELSE_KW,
 
     TOK_IDENTIFIER,
     TOK_NUMBER,

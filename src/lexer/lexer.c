@@ -20,6 +20,10 @@ static tok_kind_t check_token_keyword(strview_t text)
         return TOK_RET_KW;
     else if(strview_compare(text, strview_from_arr_len("dim", 3)))
         return TOK_DIM_KW;
+    else if(strview_compare(text, strview_from_arr_len("if", 2)))
+        return TOK_IF_KW;
+    else if(strview_compare(text, strview_from_arr_len("else", 4)))
+        return TOK_ELSE_KW;
     else
         return TOK_IDENTIFIER;
 }

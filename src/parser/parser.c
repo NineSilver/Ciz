@@ -146,6 +146,24 @@ static ast_expression_t* parser_parse_expression(parser_t* parser)
 
 static ast_statement_t* parser_parse_statement(parser_t* parser);
 
+static ast_statement_t* parser_parse_if(parser_t* parser)
+{
+    parser_advance(parser); // eat if keyword without checking kind
+    
+    ast_statement_t* if_st = calloc(1, sizeof(ast_statement_t));
+    if_st->type = AST_STMNT_IF;
+    if_st->_if.cond = parser_parse_expression(parser);
+    if_st->_if.body = parser_parse_statement(parser);
+
+    if(parser_current(parser).kind == TOK_ELSE_KW)
+    {
+        parser_advance(parser);
+        if_st->_if._else = parser_parse_statement(parser);
+    }
+
+    return if_st;
+}
+
 static ast_statement_t* parser_parse_var_decl(parser_t* parser)
 {
     parser_expect(parser, TOK_IDENTIFIER);
@@ -211,6 +229,9 @@ static ast_statement_t* parser_parse_statement(parser_t* parser)
         case TOK_DIM_KW:
             return parser_parse_var_decl(parser);
         
+        case TOK_IF_KW:
+            return parser_parse_if(parser);
+
         default:
             ast_statement_t* expr = calloc(1, sizeof(ast_statement_t));
             expr->type = AST_STMNT_EXPR;

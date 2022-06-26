@@ -2,12 +2,14 @@
 
 #include <dump.h>
 
-static const char* tok_kind_to_str[18] = {
+static const char* tok_kind_to_str[20] = {
     [TOK_PROC_KW] = "proc keyword",
     [TOK_DO_KW] = "do keyword",
     [TOK_END_KW] = "end keyword",
     [TOK_RET_KW] = "ret keyword",
     [TOK_DIM_KW] = "dim keyword",
+    [TOK_IF_KW] = "if keyword",
+    [TOK_ELSE_KW] = "else keyword",
 
     [TOK_IDENTIFIER] = "identifier",
     [TOK_NUMBER] = "number",
@@ -113,7 +115,7 @@ static void dump_statement(FILE* stream, ast_statement_t* statement, size_t inde
     {
         case AST_STMNT_BLOCK:
             for(size_t i = 0; i < statement->block.statement_num; i++)
-                dump_statement(stream, statement->block.statements[i], indent + 2);
+                dump_statement(stream, statement->block.statements[i], indent);
             
             break;
 
@@ -126,6 +128,19 @@ static void dump_statement(FILE* stream, ast_statement_t* statement, size_t inde
             do_indent(stream, indent);
             fprintf(stream, "-> dim %.*s\n", (int)statement->var_decl.name.len, statement->var_decl.name.str);
             dump_expression(stream, statement->var_decl.value, indent + 2);
+            break;
+
+        case AST_STMNT_IF:
+            do_indent(stream, indent);
+            fprintf(stream, "-> if\n");
+            dump_expression(stream, statement->_if.cond, indent + 2);
+            dump_statement(stream, statement->_if.body, indent);
+            if(statement->_if._else)
+            {
+                do_indent(stream, indent);
+                fprintf(stream, "-> else\n");
+                dump_statement(stream, statement->_if._else, indent + 2);
+            }
             break;
 
         case AST_STMNT_EXPR:
@@ -143,7 +158,7 @@ static void dump_statement(FILE* stream, ast_statement_t* statement, size_t inde
 static void dump_proc(FILE* stream, ast_proc_t proc)
 {
     fprintf(stream, "proc %.*s:\n", (int)proc.name.len, proc.name.str);
-    dump_statement(stream, proc.body, 1);
+    dump_statement(stream, proc.body, 3);
 }
 
 void dump_ast(FILE* stream, ast_program_t* program)
