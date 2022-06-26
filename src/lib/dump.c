@@ -2,7 +2,7 @@
 
 #include <dump.h>
 
-static const char* tok_kind_to_str[20] = {
+static const char* tok_kind_to_str[21] = {
     [TOK_PROC_KW] = "proc keyword",
     [TOK_DO_KW] = "do keyword",
     [TOK_END_KW] = "end keyword",
@@ -13,6 +13,7 @@ static const char* tok_kind_to_str[20] = {
 
     [TOK_IDENTIFIER] = "identifier",
     [TOK_NUMBER] = "number",
+    [TOK_STRING] = "string",
 
     [TOK_AS] = "as operator",
     [TOK_PLUS] = "plus operator",
@@ -73,14 +74,19 @@ static void dump_value(FILE* stream, ast_value_t value, size_t indent)
 {
     switch(value.type)
     {
+        case AST_VAL_STRING:
+            do_indent(stream, indent);
+            fprintf(stream, "-> \"%.*s\"\n", (int)value.string.len, value.string.str);
+            break;
+
         case AST_VAL_UNSIGNED:
             do_indent(stream, indent);
-            fprintf(stream, "-> %u\n", value._unsigned);
+            fprintf(stream, "-> %lu\n", value._unsigned);
             break;
         
         default:
             do_indent(stream, indent);
-            fprintf(stream, "-> ???\n");
+            fprintf(stream, "-> value ???\n");
             fprintf(stderr, "WARN: value type %d does not have a dump case\n", value.type);
             break;
     }
@@ -103,7 +109,7 @@ static void dump_expression(FILE* stream, ast_expression_t* expression, size_t i
 
         default:
             do_indent(stream, indent);
-            fprintf(stream, "-> ???\n");
+            fprintf(stream, "-> expression ???\n");
             fprintf(stderr, "WARN: expression type %d does not have a dump case\n", expression->type);
             break;
     }
@@ -149,7 +155,7 @@ static void dump_statement(FILE* stream, ast_statement_t* statement, size_t inde
         
         default:
             do_indent(stream, indent);
-            fprintf(stream, "-> ???\n");
+            fprintf(stream, "-> statement ???\n");
             fprintf(stderr, "WARN: statement type %d does not have a dump case\n", statement->type);
             break;
     }

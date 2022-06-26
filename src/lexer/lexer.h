@@ -17,6 +17,7 @@ typedef enum tok_kind
 
     TOK_IDENTIFIER,
     TOK_NUMBER,
+    TOK_STRING,
 
     TOK_AS,
     TOK_PLUS,

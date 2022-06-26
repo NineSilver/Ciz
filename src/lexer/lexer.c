@@ -95,6 +95,15 @@ token_t lexer_next_token(lexer_t* lexer)
     }
     else switch(first)
     {
+        case '\"':
+            lexer_advance(lexer);
+            size_t from = lexer->pos;
+            while(lexer_current(lexer) != '\"')
+                lexer_advance(lexer);
+            size_t end = lexer->pos;
+            lexer_advance(lexer);
+            return token_create(TOK_STRING, strview_slice(lexer->src, from, end), line, column);
+
         case '(':
             lexer_advance(lexer);
             return token_create(TOK_LPAREN, strview_from_arr_len("(", 1), line, column);

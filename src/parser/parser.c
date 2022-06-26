@@ -81,6 +81,13 @@ static ast_expression_t* parser_parse_expression_2(parser_t* parser)
     token_t current = parser_current(parser);
     switch(current.kind)
     {
+        case TOK_STRING:
+            expression->type = AST_EXPR_VALUE;
+            expression->value.type = AST_VAL_STRING;
+            expression->value.string = current.text;
+            parser_advance(parser);
+            return expression;
+        
         case TOK_NUMBER:
             expression->type = AST_EXPR_VALUE;
             expression->value.type = AST_VAL_UNSIGNED;

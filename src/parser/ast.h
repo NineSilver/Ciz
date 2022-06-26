@@ -7,6 +7,7 @@
 
 typedef enum ast_val_type
 {
+    AST_VAL_STRING,
     AST_VAL_UNSIGNED
 } ast_val_type_t;
 
@@ -15,7 +16,8 @@ typedef struct ast_value
     ast_val_type_t type;
     union
     {
-        unsigned int _unsigned;
+        strview_t string;
+        unsigned long _unsigned;
     };
 } ast_value_t;
 
