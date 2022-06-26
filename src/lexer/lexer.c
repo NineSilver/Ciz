@@ -116,6 +116,13 @@ token_t lexer_next_token(lexer_t* lexer)
             return token_create(TOK_STAR, strview_from_arr_len("*", 1), line, column);
 
         case '/':
+            if(lexer_peek(lexer, 1))
+            {
+                while (lexer_current(lexer) != '\n')
+                    lexer_advance(lexer);
+                
+                return lexer_next_token(lexer);
+            }
             lexer_advance(lexer);
             return token_create(TOK_SLASH, strview_from_arr_len("/", 1), line, column);
 
