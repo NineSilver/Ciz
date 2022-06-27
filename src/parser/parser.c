@@ -23,6 +23,10 @@ parser_t parser_create(lexer_t* lexer)
         }
     }
 
+    // Include EOF token
+    parser.tokens = realloc(parser.tokens, (parser.toknum + 1) * sizeof(token_t));
+    parser.tokens[parser.toknum++] = tok;
+
     return parser;
 }
 
@@ -209,7 +213,7 @@ static ast_statement_t* parser_parse_block(parser_t* parser)
     block->type = AST_STMNT_BLOCK;
 
     token_t current = parser_current(parser);
-    while(current.kind != TOK_END_KW && parser->index < parser->toknum)
+    while(current.kind != TOK_END_KW && current.kind != TOK_EOF)
     {
         block->block.statements = realloc(block->block.statements, (block->block.statement_num + 1) * sizeof(ast_statement_t*));
         block->block.statements[block->block.statement_num++] = parser_parse_statement(parser);
@@ -271,16 +275,14 @@ ast_program_t parser_parse(parser_t* parser)
 {
     ast_program_t program = {0};
 
-    token_t tok = parser_current(parser);
-    while(parser->index < parser->toknum)
+    token_t tok;
+    while((tok = parser_current(parser)).kind != TOK_EOF)
     {
         if(tok.kind == TOK_PROC_KW)
         {
             program.procs = realloc(program.procs, (program.procnum + 1) * sizeof(ast_proc_t));
             program.procs[program.procnum++] = parser_parse_proc(parser);
         }
-
-        tok = parser_current(parser);
     }
 
     return program;

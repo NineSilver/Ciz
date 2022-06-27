@@ -69,6 +69,11 @@ static void lexer_advance(lexer_t* lexer)
     lexer->pos++;
 }
 
+static inline int lexer_ended(lexer_t* lexer)
+{
+    return (lexer->pos >= lexer->src.len);
+}
+
 token_t lexer_next_token(lexer_t* lexer)
 {
     while(isspace(lexer_current(lexer)))
@@ -79,7 +84,7 @@ token_t lexer_next_token(lexer_t* lexer)
 
     if(isident(first))
     {
-        while(isident_later(lexer_current(lexer)))
+        while(!lexer_ended(lexer) && isident_later(lexer_current(lexer)))
             lexer_advance(lexer);
 
         strview_t text = strview_slice(lexer->src, start, lexer->pos);
@@ -98,7 +103,7 @@ token_t lexer_next_token(lexer_t* lexer)
         case '\"':
             lexer_advance(lexer);
             size_t from = lexer->pos;
-            while(lexer_current(lexer) != '\"')
+            while(!lexer_ended(lexer) && lexer_current(lexer) != '\"')
                 lexer_advance(lexer);
             size_t end = lexer->pos;
             lexer_advance(lexer);
@@ -127,7 +132,7 @@ token_t lexer_next_token(lexer_t* lexer)
         case '/':
             if(lexer_peek(lexer, 1))
             {
-                while (lexer_current(lexer) != '\n')
+                while(!lexer_ended(lexer) && lexer_current(lexer) != '\n')
                     lexer_advance(lexer);
                 
                 return lexer_next_token(lexer);
