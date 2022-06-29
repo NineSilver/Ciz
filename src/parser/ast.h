@@ -1,6 +1,7 @@
 #ifndef __CIZ__PARSER__AST_H
 #define __CIZ__PARSER__AST_H
 
+#include <data.h>
 #include <strview.h>
 
 #include "../lexer/lexer.h"
@@ -70,12 +71,13 @@ struct ast_statement
 
         struct
         {
-            ast_expression_t* expr; 
+            ast_expression_t* expr;
         } ret;
 
         struct
         {
             strview_t name;
+            datatype_t type;
             ast_expression_t* value;
         } var_decl;
 
@@ -94,6 +96,7 @@ struct ast_statement
 typedef struct ast_proc
 {
     strview_t name;
+    datatype_t ret_type;
     ast_statement_t* body;
 } ast_proc_t;
 

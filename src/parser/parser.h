@@ -11,6 +11,12 @@ typedef struct parser
     token_t* tokens;
     size_t toknum;
     size_t index;
+
+    struct
+    {
+        ast_proc_t* current_proc;
+        int inside_str_expr;
+    } state;
 } parser_t;
 
 parser_t parser_create(lexer_t* lexer);

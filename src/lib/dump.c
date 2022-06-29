@@ -1,8 +1,9 @@
 #include <stdio.h>
 
+#include <data.h>
 #include <dump.h>
 
-static const char* tok_kind_to_str[21] = {
+static const char* tok_kind_to_str[22] = {
     [TOK_PROC_KW] = "proc keyword",
     [TOK_DO_KW] = "do keyword",
     [TOK_END_KW] = "end keyword",
@@ -10,6 +11,8 @@ static const char* tok_kind_to_str[21] = {
     [TOK_DIM_KW] = "dim keyword",
     [TOK_IF_KW] = "if keyword",
     [TOK_ELSE_KW] = "else keyword",
+
+    [TOK_INT_KW] = "Int type keyword",
 
     [TOK_IDENTIFIER] = "identifier",
     [TOK_NUMBER] = "number",
@@ -53,6 +56,12 @@ static const char* op_to_sign(tok_kind_t op)
         default:
             return "no-op";
     }
+};
+
+static const char* datatype_to_str[3] = {
+    [DATA_VOID] = "void type",
+    [DATA_INT] = "int type",
+    [DATA_STRING] = "string type"
 };
 
 const char* token_kind_to_str(tok_kind_t kind)
@@ -132,7 +141,7 @@ static void dump_statement(FILE* stream, ast_statement_t* statement, size_t inde
 
         case AST_STMNT_VAR_DECL:
             do_indent(stream, indent);
-            fprintf(stream, "-> dim %.*s\n", (int)statement->var_decl.name.len, statement->var_decl.name.str);
+            fprintf(stream, "-> dim %.*s :: %s\n", (int)statement->var_decl.name.len, statement->var_decl.name.str, datatype_to_str[statement->var_decl.type]);
             dump_expression(stream, statement->var_decl.value, indent + 2);
             break;
 
@@ -163,7 +172,7 @@ static void dump_statement(FILE* stream, ast_statement_t* statement, size_t inde
 
 static void dump_proc(FILE* stream, ast_proc_t proc)
 {
-    fprintf(stream, "proc %.*s:\n", (int)proc.name.len, proc.name.str);
+    fprintf(stream, "proc %.*s :: %s:\n", (int)proc.name.len, proc.name.str, datatype_to_str[proc.ret_type]);
     dump_statement(stream, proc.body, 3);
 }
 

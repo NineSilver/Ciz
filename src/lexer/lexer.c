@@ -24,6 +24,8 @@ static tok_kind_t check_token_keyword(strview_t text)
         return TOK_IF_KW;
     else if(strview_compare(text, strview_from_arr_len("else", 4)))
         return TOK_ELSE_KW;
+    else if(strview_compare(text, strview_from_arr_len("Int", 3)))
+        return TOK_INT_KW;
     else
         return TOK_IDENTIFIER;
 }
@@ -106,6 +108,8 @@ token_t lexer_next_token(lexer_t* lexer)
             while(!lexer_ended(lexer) && lexer_current(lexer) != '\"')
                 lexer_advance(lexer);
             size_t end = lexer->pos;
+            if(lexer_current(lexer) != '\"')
+                fprintf(stderr, "WARN: unquoted string at %lu:%lu\n", line, column);
             lexer_advance(lexer);
             return token_create(TOK_STRING, strview_slice(lexer->src, from, end), line, column);
 

@@ -68,6 +68,20 @@ static void parser_eat(parser_t* parser, tok_kind_t kind)
     parser_advance(parser);
 }
 
+
+static datatype_t expression_type(ast_expression_t* expression)
+{
+    if(expression->type == AST_EXPR_BINARY) return DATA_INT;
+    switch(expression->value.type)
+    {
+        case AST_VAL_UNSIGNED: return DATA_INT;
+        case AST_VAL_STRING: return DATA_STRING;
+        default:
+            fprintf(stderr, "ERROR: should not reach\n");
+            exit(-1);
+    }
+}
+
 static ast_expression_t* parser_parse_expression_0(parser_t* parser);
 
 static ast_expression_t* parser_parse_expression_2(parser_t* parser)
@@ -86,6 +100,7 @@ static ast_expression_t* parser_parse_expression_2(parser_t* parser)
     switch(current.kind)
     {
         case TOK_STRING:
+            parser->state.inside_str_expr = 1;
             expression->type = AST_EXPR_VALUE;
             expression->value.type = AST_VAL_STRING;
             expression->value.string = current.text;
@@ -111,6 +126,12 @@ static ast_expression_t* parser_parse_expression_1(parser_t* parser)
 
     while(parser_current(parser).kind == TOK_STAR || parser_current(parser).kind == TOK_SLASH)
     {
+        if(parser->state.inside_str_expr)
+        {
+            fprintf(stderr, "ERROR: string literal may not be followed by a numeric operator (%lu:%lu)\n", parser_current(parser).line, parser_current(parser).column);
+            exit(-1);
+        }
+
         tok_kind_t op = parser_current(parser).kind;
         parser_advance(parser);
 
@@ -133,6 +154,12 @@ static ast_expression_t* parser_parse_expression_0(parser_t* parser)
     ast_expression_t* left = parser_parse_expression_1(parser);
     while(parser_current(parser).kind == TOK_PLUS || parser_current(parser).kind == TOK_MINUS)
     {
+        if(parser->state.inside_str_expr)
+        {
+            fprintf(stderr, "ERROR: string literal may not be followed by a numeric operator (%lu:%lu)\n", parser_current(parser).line, parser_current(parser).column);
+            exit(-1);
+        }
+
         tok_kind_t op = parser_current(parser).kind;
         parser_advance(parser);
 
@@ -152,7 +179,9 @@ static ast_expression_t* parser_parse_expression_0(parser_t* parser)
 
 static ast_expression_t* parser_parse_expression(parser_t* parser)
 {
-    return parser_parse_expression_0(parser);
+    ast_expression_t* expr = parser_parse_expression_0(parser);
+    parser->state.inside_str_expr = 0;
+    return expr;
 }
 
 static ast_statement_t* parser_parse_statement(parser_t* parser);
@@ -185,9 +214,40 @@ static ast_statement_t* parser_parse_var_decl(parser_t* parser)
     dim->var_decl.name = parser_current(parser).text;
     
     parser_advance(parser);
+
+    if(parser_current(parser).kind == TOK_AS)
+    {
+        parser_advance(parser);
+        token_t curr = parser_current(parser);
+        int type = keyword_to_datatype(curr);
+        if(type < 0)
+        {
+            fprintf(stderr, "ERROR: expected type after token as-operator; got %s (%lu:%lu)\n", token_kind_to_str(curr.kind), curr.line, curr.column);
+            exit(-1);
+        }
+
+        dim->var_decl.type = type;
+        parser_advance(parser);
+    }
+
     parser_eat(parser, TOK_EQUALS);
 
-    dim->var_decl.value = parser_parse_expression(parser);
+    size_t line = parser_current(parser).line, column = parser_current(parser).column;
+    ast_expression_t* expr = parser_parse_expression(parser);
+    if(dim->var_decl.type != 0)
+    {
+        if(expression_type(expr) != dim->var_decl.type)
+        {
+            fprintf(stderr, "ERROR: expression type does not match variable type (%lu:%lu)\n", line, column);
+            exit(-1);
+        }
+    }
+    else
+    {
+        dim->var_decl.type = expression_type(expr);
+    }
+
+    dim->var_decl.value = expr;
     parser_eat(parser, TOK_SEMICOLON);
 
     return dim;
@@ -195,10 +255,31 @@ static ast_statement_t* parser_parse_var_decl(parser_t* parser)
 
 static ast_statement_t* parser_parse_ret(parser_t* parser)
 {
+    if(!parser->state.current_proc)
+    {
+        fprintf(stderr, "ERROR: ret statements can only be placed inside of a procedure (%lu:%lu)\n", parser_current(parser).line, parser_current(parser).column);
+        exit(-1);
+    }
+
     parser_advance(parser);
 
     ast_statement_t* ret = calloc(1, sizeof(ast_statement_t));
     ret->type = AST_STMNT_RET;
+
+    if(parser->state.current_proc->ret_type != DATA_VOID)
+    {
+        size_t line = parser_current(parser).line, column = parser_current(parser).column;
+        ast_expression_t* expr = parser_parse_expression(parser);
+        datatype_t type = expression_type(expr);
+
+        if(parser->state.current_proc->ret_type != type)
+        {
+            fprintf(stderr, "ERROR: expression type does not match parent procedure return type (%lu:%lu)\n", line, column);
+            exit(-1);
+        }
+
+        ret->ret.expr = expr;
+    }
     
     parser_eat(parser, TOK_SEMICOLON);
     
@@ -266,7 +347,30 @@ static ast_proc_t parser_parse_proc(parser_t* parser)
     parser_expect(parser, TOK_DO_KW);
     parser_eat(parser, TOK_RPAREN);
 
+    if(parser_current(parser).kind == TOK_AS)
+    {
+        parser_advance(parser);
+
+        token_t curr = parser_current(parser);
+        int type = datatype_check(curr);
+        if(type < 0)
+        {
+            fprintf(stderr, "ERROR: expected type after token as-operator; got %s (%lu:%lu)\n", token_kind_to_str(curr.kind), curr.line, curr.column);
+            exit(-1);
+        }
+
+        proc.ret_type = type;
+    }
+    else
+    {
+        proc.ret_type = DATA_VOID;
+    }
+
+    parser->state.current_proc = &proc;
+
     proc.body = parser_parse_block(parser);
+
+    parser->state.current_proc = NULL;
 
     return proc;
 }

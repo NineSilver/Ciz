@@ -15,6 +15,8 @@ typedef enum tok_kind
     TOK_IF_KW,
     TOK_ELSE_KW,
 
+    TOK_INT_KW,
+
     TOK_IDENTIFIER,
     TOK_NUMBER,
     TOK_STRING,
@@ -50,7 +52,6 @@ typedef struct lexer
     size_t column;
 } lexer_t;
 
-void token_print(FILE* fp, token_t tok);
 const char* token_kind_to_str(tok_kind_t kind);
 
 lexer_t lexer_create(strview_t src);
