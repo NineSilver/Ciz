@@ -37,3 +37,15 @@ char* io_read_file(const char* path, size_t* out_flen)
     fclose(fp);
     return content;
 }
+
+FILE* io_open_output(const char* path)
+{
+    FILE* out = fopen(path, "w");
+    if(!out)
+    {
+        fprintf(stderr, "ERROR: unable to open output file %s: %s\n", path, strerror(errno));
+        return NULL;
+    }
+
+    return out;
+}
