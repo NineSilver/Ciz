@@ -21,24 +21,18 @@ static void usage(const char* argv0)
     fprintf(stderr, "\t-o, --output <file>\twrite the output to the specified argument\n");
 }
 
-static void ciz_compile_file(const char* in_path, const char* out_path)
+static void ciz_compile_file(const char* in, const char* out)
 {
     size_t len;
-    char* file = io_read_file(in_path, &len);
+    char* file = io_read_file(in, &len);
     if(!file) return;
 
     lexer_t lexer = lexer_create(strview_from_arr_len(file, len));
     parser_t parser = parser_create(&lexer);
 
     ast_program_t program = parser_parse(&parser);
-    dump_ast(stdout, &program);
-
-    FILE* out = io_open_output(out_path);
-    if(!out) return;
-
-    //codegen_nasm(&program);
-
-    fclose(out);
+    //dump_ast(stdout, &program);
+    codegen_nasm(out, &program);
     free(file);
 }
 
