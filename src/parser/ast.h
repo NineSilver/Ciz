@@ -1,6 +1,7 @@
 #ifndef __CIZ__PARSER__AST_H
 #define __CIZ__PARSER__AST_H
 
+#include <context.h>
 #include <data.h>
 #include <strview.h>
 
@@ -25,7 +26,9 @@ typedef struct ast_value
 typedef enum ast_expr
 {
     AST_EXPR_VALUE,
-    AST_EXPR_BINARY
+    AST_EXPR_BINARY,
+    AST_EXPR_ASSIGN,
+    AST_EXPR_VAR_REF
 } ast_expr_type_t;
 
 typedef struct ast_expression ast_expression_t;
@@ -42,6 +45,17 @@ typedef struct ast_expression
             ast_expression_t* left;
             ast_expression_t* right;
         } binary;
+
+        struct
+        {
+            size_t var_idx;
+            ast_expression_t* new_value;
+        } assign;
+
+        struct
+        {
+            size_t idx;
+        } var_ref;
     };
 } ast_expression_t;
 
@@ -78,6 +92,7 @@ struct ast_statement
         {
             strview_t name;
             datatype_t type;
+            size_t idx;
             ast_expression_t* value;
         } var_decl;
 
@@ -98,6 +113,7 @@ typedef struct ast_proc
     strview_t name;
     datatype_t ret_type;
     ast_statement_t* body;
+    context_t* ctx;
 } ast_proc_t;
 
 typedef struct ast_program

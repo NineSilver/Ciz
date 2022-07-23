@@ -15,6 +15,7 @@ typedef struct parser
     struct
     {
         ast_proc_t* current_proc;
+        context_t* current_ctx;
         int inside_str_expr;
     } state;
 } parser_t;

@@ -69,9 +69,21 @@ static void parser_eat(parser_t* parser, tok_kind_t kind)
 }
 
 
-static datatype_t expression_type(ast_expression_t* expression)
+static datatype_t expression_type(context_t* ctx, ast_expression_t* expression)
 {
-    if(expression->type == AST_EXPR_BINARY) return DATA_INT;
+    switch(expression->type)
+    {
+        case AST_EXPR_ASSIGN:
+            fprintf(stderr, "ERROR: assignment expression type is not implemented yet\n");
+            exit(-1);
+        case AST_EXPR_BINARY:
+            return DATA_INT;
+        case AST_EXPR_VALUE:
+            break;
+        case AST_EXPR_VAR_REF:
+            return ctx->decls[expression->var_ref.idx].type;
+    }
+
     switch(expression->value.type)
     {
         case AST_VAL_UNSIGNED: return DATA_INT;
@@ -82,6 +94,7 @@ static datatype_t expression_type(ast_expression_t* expression)
     }
 }
 
+static ast_expression_t* parser_parse_expression(parser_t* parser);
 static ast_expression_t* parser_parse_expression_0(parser_t* parser);
 
 static ast_expression_t* parser_parse_expression_2(parser_t* parser)
@@ -112,6 +125,37 @@ static ast_expression_t* parser_parse_expression_2(parser_t* parser)
             expression->value.type = AST_VAL_UNSIGNED;
             expression->value._unsigned = strtoul(current.text.str, NULL, 10);
             parser_advance(parser);
+            return expression;
+
+        case TOK_IDENTIFIER:
+            token_t cur = parser_current(parser);
+            size_t var_idx = 0;
+            if(!context_search_var(parser->state.current_ctx, cur.text, &var_idx))
+            {
+                fprintf(stderr, "ERROR: reference to undeclared variable %.*s (%lu:%lu)\n", (int)cur.text.len, cur.text.str, cur.line, cur.column);
+                exit(-1);
+            }
+            datatype_t type = parser->state.current_ctx->decls[var_idx].type;
+            parser_advance(parser);
+            if(parser_current(parser).kind == TOK_EQUALS)
+            {
+                ast_expression_t* new = parser_parse_expression(parser);
+                datatype_t expr_type = expression_type(parser->state.current_ctx, new);
+                if(type != expr_type)
+                {
+                    fprintf(stderr, "ERROR: impossible to assign value of type %d to variable of type %d (%lu:%lu)\n", expr_type, type, cur.line, cur.column);
+                    exit(-1);
+                }
+                expression->type = AST_EXPR_ASSIGN;
+                expression->assign.var_idx = var_idx;
+                expression->assign.new_value = new;
+            }
+            else
+            {
+                expression->type = AST_EXPR_VAR_REF;
+                expression->var_ref.idx = var_idx;
+            }
+
             return expression;
         
         default:
@@ -236,7 +280,7 @@ static ast_statement_t* parser_parse_var_decl(parser_t* parser)
     ast_expression_t* expr = parser_parse_expression(parser);
     if(dim->var_decl.type != 0)
     {
-        if(expression_type(expr) != dim->var_decl.type)
+        if(expression_type(parser->state.current_ctx, expr) != dim->var_decl.type)
         {
             fprintf(stderr, "ERROR: expression type does not match variable type (%lu:%lu)\n", line, column);
             exit(-1);
@@ -244,11 +288,13 @@ static ast_statement_t* parser_parse_var_decl(parser_t* parser)
     }
     else
     {
-        dim->var_decl.type = expression_type(expr);
+        dim->var_decl.type = expression_type(parser->state.current_ctx, expr);
     }
 
     dim->var_decl.value = expr;
     parser_eat(parser, TOK_SEMICOLON);
+
+    dim->var_decl.idx = context_add_var(parser->state.current_ctx, (var_t){ .name = dim->var_decl.name, .type = dim->var_decl.type });
 
     return dim;
 }
@@ -270,7 +316,7 @@ static ast_statement_t* parser_parse_ret(parser_t* parser)
     {
         size_t line = parser_current(parser).line, column = parser_current(parser).column;
         ast_expression_t* expr = parser_parse_expression(parser);
-        datatype_t type = expression_type(expr);
+        datatype_t type = expression_type(parser->state.current_ctx, expr);
 
         if(parser->state.current_proc->ret_type != type)
         {
@@ -343,22 +389,18 @@ static ast_proc_t parser_parse_proc(parser_t* parser)
     proc.name = parser_current(parser).text;
     parser_advance(parser);
 
-    parser_eat(parser, TOK_LPAREN);
-    parser_expect(parser, TOK_DO_KW);
-    parser_eat(parser, TOK_RPAREN);
-
     if(parser_current(parser).kind == TOK_AS)
     {
         parser_advance(parser);
 
         token_t curr = parser_current(parser);
-        int type = datatype_check(curr);
+        int type = keyword_to_datatype(curr);
         if(type < 0)
         {
             fprintf(stderr, "ERROR: expected type after token as-operator; got %s (%lu:%lu)\n", token_kind_to_str(curr.kind), curr.line, curr.column);
             exit(-1);
         }
-
+        parser_advance(parser);
         proc.ret_type = type;
     }
     else
@@ -366,7 +408,13 @@ static ast_proc_t parser_parse_proc(parser_t* parser)
         proc.ret_type = DATA_VOID;
     }
 
+    parser_eat(parser, TOK_LPAREN);
+    parser_expect(parser, TOK_DO_KW);
+    parser_eat(parser, TOK_RPAREN);
+
+    proc.ctx = calloc(1, sizeof(context_t));
     parser->state.current_proc = &proc;
+    parser->state.current_ctx = proc.ctx;
 
     proc.body = parser_parse_block(parser);
 
