@@ -1,19 +1,31 @@
 BIN	= ciz
 
 CC ?= gcc
-CFLAGS = -std=c99 -g -O2 -Wall -Wextra -Werror -I src/lib
+CFLAGS = -std=c99 -Wall -Wextra -Werror -I src/lib
 
 SRCS := $(shell find src -type f -name "*.c")
 OBJS := $(patsubst src/%.c, src/%.o, $(SRCS))
 
-all: $(BIN)
+.DEFAULT: all
+.PHONY: all
+all: release
+
+.PHONY: debug
+debug: CFLAGS += -g -O2
+debug: $(BIN)
+
+.PHONY: release
+release: CFLAGS += -Ofast
+release: $(BIN)
+
 $(BIN): $(OBJS)
 	@echo " [LD] $@"
-	@${CC} -g -O2 $^ -o $@
+	@${CC} $^ -o $@
 
 %.o: %.c
 	@echo " [CC] $<"
 	@${CC} $(CFLAGS) -c $< -o $@
 
+.PHONY: clean
 clean:
 	rm -f $(OBJS) $(BIN)
