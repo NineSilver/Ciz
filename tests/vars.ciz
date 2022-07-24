@@ -1,0 +1,4 @@
+proc Main :: Int () do
+    dim Test = 1 + 2 * 3;
+    ret Test;
+end
