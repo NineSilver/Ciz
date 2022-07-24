@@ -128,6 +128,7 @@ static ast_expression_t* parser_parse_expression_2(parser_t* parser)
             return expression;
 
         case TOK_IDENTIFIER:
+        {
             token_t cur = parser_current(parser);
             size_t var_idx = 0;
             if(!context_search_var(parser->state.current_ctx, cur.text, &var_idx))
@@ -157,6 +158,7 @@ static ast_expression_t* parser_parse_expression_2(parser_t* parser)
             }
 
             return expression;
+        }
         
         default:
             fprintf(stderr, "TODO %s\n", token_kind_to_str(current.kind));
@@ -371,11 +373,13 @@ static ast_statement_t* parser_parse_statement(parser_t* parser)
             return parser_parse_if(parser);
 
         default:
+        {
             ast_statement_t* expr = calloc(1, sizeof(ast_statement_t));
             expr->type = AST_STMNT_EXPR;
             expr->expr = parser_parse_expression(parser);
             parser_eat(parser, TOK_SEMICOLON);
             return expr;
+        }
     }
 }
 

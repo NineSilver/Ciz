@@ -32,7 +32,7 @@ typedef enum ast_expr
 } ast_expr_type_t;
 
 typedef struct ast_expression ast_expression_t;
-typedef struct ast_expression
+struct ast_expression
 {
     ast_expr_type_t type;
     union
@@ -57,7 +57,7 @@ typedef struct ast_expression
             size_t idx;
         } var_ref;
     };
-} ast_expression_t;
+};
 
 typedef enum ast_stmnt_type
 {
