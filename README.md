@@ -11,6 +11,10 @@ Right now the compiler is not ready for use, as it only consists in a lexer and 
 If you have ever built a C project, you know what to do. Otherwise: install gcc and make, and compile the final executable with the `make` command.
 To remove object files from the working tree issue `make clean`.
 
+> Note: if you want to use a different compiler, call `make` setting the variable CC to the path of that compiler. Example: `CC=clang make`.
+
+The `make` command defaults to the release target, which optimises the code and does not generate debugging symbols. To test the program it is recommended to use the debug version (`make debug`). Use also the debug target if you're using debuggers.
+
 [Take a look at the build system](./Makefile).
 
 
@@ -23,6 +27,8 @@ proc Main :: Int () do
     ret 0;
 end
 ```
+
+You can read other samples inside the [tests](./tests) folder.
 
 
 ## Roadmap
