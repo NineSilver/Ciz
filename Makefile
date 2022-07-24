@@ -11,7 +11,7 @@ OBJS := $(patsubst src/%.c, src/%.o, $(SRCS))
 all: release
 
 .PHONY: debug
-debug: CFLAGS += -g -O2
+debug: CFLAGS += -g -O0
 debug: $(BIN)
 
 .PHONY: release
