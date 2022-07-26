@@ -25,7 +25,6 @@ static void generate_expression(FILE* stream, generator_t* gen, ast_expression_t
 static void generate_binary_expression(FILE* stream, generator_t* gen, ast_expression_t* expression)
 {
     generate_expression(stream, gen, expression->binary.right);
-    fprintf(stream, "  push rdx\n");
     fprintf(stream, "  mov rdx, rax\n");
     generate_expression(stream, gen, expression->binary.left);
 
@@ -78,6 +77,19 @@ static void generate_expression(FILE* stream, generator_t* gen, ast_expression_t
             fprintf(stream, "  mov rax, [rbp + %d]\n", gen->curr_ctx->offsets[expression->var_ref.idx]);
             break;
 
+        case AST_EXPR_EQUALS:
+            generate_expression(stream, gen, expression->equals.right);
+            fprintf(stream, "  mov rdx, rax\n");
+            generate_expression(stream, gen, expression->equals.left);
+            fprintf(stream, "  mov rcx, rax\n");
+            fprintf(stream, "  xor rax, rax\n");
+            fprintf(stream, "  cmp rcx, rdx\n");
+            if(expression->equals.reverse) fprintf(stream, "  je .lbl_%lu\n", gen->curr_proc->label_num);
+            else fprintf(stream, "  jne .lbl_%lu\n", gen->curr_proc->label_num);
+            fprintf(stream, "  inc rax\n");
+            fprintf(stream, ".lbl_%lu:\n", gen->curr_proc->label_num++);
+            break;
+
         default:
             fprintf(stderr, "ERROR: expression type %d generation is not implemented\n", expression->type);
             exit(-1);
@@ -101,6 +113,26 @@ static void generate_var_decl(FILE* stream, generator_t* gen, ast_statement_t* s
     }
 }
 
+static void generate_statement(FILE* stream, generator_t* gen, ast_statement_t* statement);
+
+static void generate_if(FILE* stream, generator_t* gen, ast_statement_t* statement)
+{
+    generate_expression(stream, gen, statement->_if.cond);
+    fprintf(stream, "  test rax, rax\n");
+    fprintf(stream, "  jz .lbl_%lu\n", gen->curr_proc->label_num);
+    generate_statement(stream, gen, statement->_if.body);
+
+    if(statement->_if._else)
+    {
+        fprintf(stream, "  jmp .lbl_%lu\n", gen->curr_proc->label_num + 1);
+        fprintf(stream, ".lbl_%lu:\n", gen->curr_proc->label_num++);
+
+        generate_statement(stream, gen, statement->_if._else);
+    }
+
+    fprintf(stream, ".lbl_%lu:\n", gen->curr_proc->label_num++);
+}
+
 static void generate_statement(FILE* stream, generator_t* gen, ast_statement_t* statement)
 {
     switch(statement->type)
@@ -117,7 +149,11 @@ static void generate_statement(FILE* stream, generator_t* gen, ast_statement_t* 
         case AST_STMNT_VAR_DECL:
             generate_var_decl(stream, gen, statement);
             break;
-        
+
+        case AST_STMNT_IF:
+            generate_if(stream, gen, statement);
+            break;
+
         default:
             fprintf(stderr, "ERROR: statement type %d generation is not implemented\n", statement->type);
             exit(-1);

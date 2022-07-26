@@ -1,0 +1,9 @@
+proc Main :: Int () do
+    dim Var = 10;
+    if Var == 5 do
+        ret 0;
+    end
+    else do
+        ret Var;
+    end
+end

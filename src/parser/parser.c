@@ -73,15 +73,15 @@ static datatype_t expression_type(context_t* ctx, ast_expression_t* expression)
 {
     switch(expression->type)
     {
-        case AST_EXPR_ASSIGN:
-            fprintf(stderr, "ERROR: assignment expression type is not implemented yet\n");
-            exit(-1);
         case AST_EXPR_BINARY:
             return DATA_INT;
         case AST_EXPR_VALUE:
             break;
         case AST_EXPR_VAR_REF:
             return ctx->decls[expression->var_ref.idx].type;
+        default:
+            fprintf(stderr, "ERROR: %d expression type is not implemented yet\n", expression->type);
+            exit(-1);
     }
 
     switch(expression->value.type)
@@ -95,14 +95,14 @@ static datatype_t expression_type(context_t* ctx, ast_expression_t* expression)
 }
 
 static ast_expression_t* parser_parse_expression(parser_t* parser);
-static ast_expression_t* parser_parse_expression_0(parser_t* parser);
+static ast_expression_t* parser_parse_expression_3(parser_t* parser);
 
-static ast_expression_t* parser_parse_expression_2(parser_t* parser)
+static ast_expression_t* parser_parse_expression_0(parser_t* parser)
 {
     if(parser_current(parser).kind == TOK_LPAREN)
     {
         parser_advance(parser);
-        ast_expression_t* expr = parser_parse_expression_0(parser);
+        ast_expression_t* expr = parser_parse_expression_3(parser);
         parser_eat(parser, TOK_RPAREN);
 
         return expr;
@@ -138,7 +138,7 @@ static ast_expression_t* parser_parse_expression_2(parser_t* parser)
             }
             datatype_t type = parser->state.current_ctx->decls[var_idx].type;
             parser_advance(parser);
-            if(parser_current(parser).kind == TOK_EQUALS)
+            if(parser_current(parser).kind == TOK_ASSIGN)
             {
                 ast_expression_t* new = parser_parse_expression(parser);
                 datatype_t expr_type = expression_type(parser->state.current_ctx, new);
@@ -168,7 +168,7 @@ static ast_expression_t* parser_parse_expression_2(parser_t* parser)
 
 static ast_expression_t* parser_parse_expression_1(parser_t* parser)
 {
-    ast_expression_t* left = parser_parse_expression_2(parser);
+    ast_expression_t* left = parser_parse_expression_0(parser);
 
     while(parser_current(parser).kind == TOK_STAR || parser_current(parser).kind == TOK_SLASH)
     {
@@ -181,7 +181,7 @@ static ast_expression_t* parser_parse_expression_1(parser_t* parser)
         tok_kind_t op = parser_current(parser).kind;
         parser_advance(parser);
 
-        ast_expression_t* right = parser_parse_expression_2(parser);
+        ast_expression_t* right = parser_parse_expression_0(parser);
 
         ast_expression_t* expr = calloc(1, sizeof(ast_expression_t));
         expr->type = AST_EXPR_BINARY;
@@ -195,7 +195,7 @@ static ast_expression_t* parser_parse_expression_1(parser_t* parser)
     return left;
 }
 
-static ast_expression_t* parser_parse_expression_0(parser_t* parser)
+static ast_expression_t* parser_parse_expression_2(parser_t* parser)
 {
     ast_expression_t* left = parser_parse_expression_1(parser);
     while(parser_current(parser).kind == TOK_PLUS || parser_current(parser).kind == TOK_MINUS)
@@ -223,9 +223,37 @@ static ast_expression_t* parser_parse_expression_0(parser_t* parser)
     return left;
 }
 
+static ast_expression_t* parser_parse_expression_3(parser_t* parser)
+{
+    ast_expression_t* left = parser_parse_expression_2(parser);
+    while(parser_current(parser).kind == TOK_EQUALS || parser_current(parser).kind == TOK_NOTEQ)
+    {
+        if(parser->state.inside_str_expr)
+        {
+            fprintf(stderr, "ERROR: string literal may not be followed by a numeric operator (%lu:%lu)\n", parser_current(parser).line, parser_current(parser).column);
+            exit(-1);
+        }
+
+        tok_kind_t op = parser_current(parser).kind;
+        parser_advance(parser);
+
+        ast_expression_t* right = parser_parse_expression_2(parser);
+
+        ast_expression_t* expr = calloc(1, sizeof(ast_expression_t));
+        expr->type = AST_EXPR_EQUALS;
+        expr->equals.left = left;
+        expr->equals.right = right;
+        expr->equals.reverse = (op == TOK_EQUALS) ? 0 : 1;
+
+        left = expr;
+    }
+
+    return left;
+}
+
 static ast_expression_t* parser_parse_expression(parser_t* parser)
 {
-    ast_expression_t* expr = parser_parse_expression_0(parser);
+    ast_expression_t* expr = parser_parse_expression_3(parser);
     parser->state.inside_str_expr = 0;
     return expr;
 }
@@ -276,7 +304,7 @@ static ast_statement_t* parser_parse_var_decl(parser_t* parser)
         parser_advance(parser);
     }
 
-    parser_eat(parser, TOK_EQUALS);
+    parser_eat(parser, TOK_ASSIGN);
 
     size_t line = parser_current(parser).line, column = parser_current(parser).column;
     ast_expression_t* expr = parser_parse_expression(parser);
@@ -385,7 +413,7 @@ static ast_statement_t* parser_parse_statement(parser_t* parser)
 
 static ast_proc_t parser_parse_proc(parser_t* parser)
 {
-    ast_proc_t proc;
+    ast_proc_t proc = {0};
     
     parser_expect(parser, TOK_IDENTIFIER);
     parser_advance(parser); // eat proc keyword without checking kind

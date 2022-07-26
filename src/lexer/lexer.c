@@ -146,7 +146,12 @@ token_t lexer_next_token(lexer_t* lexer)
 
         case '=':
             lexer_advance(lexer);
-            return token_create(TOK_EQUALS, strview_from_arr_len("=", 1), line, column);
+            if(lexer_current(lexer) == '=')
+            {
+                lexer_advance(lexer);
+                return token_create(TOK_EQUALS, strview_from_arr_len("==", 2), line, column);
+            }
+            return token_create(TOK_ASSIGN, strview_from_arr_len("=", 1), line, column);
 
         case ':':
             if(lexer_peek(lexer, 1) == ':')
@@ -160,6 +165,15 @@ token_t lexer_next_token(lexer_t* lexer)
         case ';':
             lexer_advance(lexer);
             return token_create(TOK_SEMICOLON, strview_from_arr_len(";", 1), line, column);
+        
+        case '!':
+            if(lexer_peek(lexer, 1) == '=')
+            {
+                lexer_advance(lexer);
+                lexer_advance(lexer);
+                return token_create(TOK_NOTEQ, strview_from_arr_len("!=", 2), line, column);
+            }
+            break;
 
         case '\0':
             return token_create(TOK_EOF, strview_from_arr_len(NULL, 0), line, column);

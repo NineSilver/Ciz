@@ -27,7 +27,9 @@ typedef enum tok_kind
     TOK_STAR,
     TOK_SLASH,
 
+    TOK_ASSIGN,
     TOK_EQUALS,
+    TOK_NOTEQ,
 
     TOK_LPAREN,
     TOK_RPAREN,
