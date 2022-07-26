@@ -133,6 +133,18 @@ static void generate_if(FILE* stream, generator_t* gen, ast_statement_t* stateme
     fprintf(stream, ".lbl_%lu:\n", gen->curr_proc->label_num++);
 }
 
+static void generate_while(FILE* stream, generator_t* gen, ast_statement_t* statement)
+{
+    size_t up = gen->curr_proc->label_num;
+    fprintf(stream, ".lbl_%lu:\n", gen->curr_proc->label_num++);
+
+    generate_statement(stream, gen, statement->_while.body);
+
+    generate_expression(stream, gen, statement->_while.cond);
+    fprintf(stream, "  test rax, rax\n");
+    fprintf(stream, "  jnz .lbl_%lu\n", up);
+}
+
 static void generate_statement(FILE* stream, generator_t* gen, ast_statement_t* statement)
 {
     switch(statement->type)
@@ -152,6 +164,10 @@ static void generate_statement(FILE* stream, generator_t* gen, ast_statement_t* 
 
         case AST_STMNT_IF:
             generate_if(stream, gen, statement);
+            break;
+
+        case AST_STMNT_WHILE:
+            generate_while(stream, gen, statement);
             break;
 
         default:

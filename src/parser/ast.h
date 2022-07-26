@@ -75,6 +75,7 @@ typedef enum ast_stmnt_type
     AST_STMNT_VAR_DECL,
 
     AST_STMNT_IF,
+    AST_STMNT_WHILE,
 
     AST_STMNT_EXPR
 } ast_stmnt_type_t;
@@ -111,6 +112,11 @@ struct ast_statement
             ast_statement_t* _else;
         } _if;
         
+        struct
+        {
+            ast_expression_t* cond;
+            ast_statement_t* body;
+        } _while;
 
         ast_expression_t* expr;
     };

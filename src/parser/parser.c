@@ -260,6 +260,18 @@ static ast_expression_t* parser_parse_expression(parser_t* parser)
 
 static ast_statement_t* parser_parse_statement(parser_t* parser);
 
+static ast_statement_t* parser_parse_while(parser_t* parser)
+{
+    parser_advance(parser); // eat while keyword without checking kind
+    
+    ast_statement_t* while_st = calloc(1, sizeof(ast_statement_t));
+    while_st->type = AST_STMNT_WHILE;
+    while_st->_while.cond = parser_parse_expression(parser);
+    while_st->_while.body = parser_parse_statement(parser);
+
+    return while_st;
+}
+
 static ast_statement_t* parser_parse_if(parser_t* parser)
 {
     parser_advance(parser); // eat if keyword without checking kind
@@ -399,6 +411,9 @@ static ast_statement_t* parser_parse_statement(parser_t* parser)
         
         case TOK_IF_KW:
             return parser_parse_if(parser);
+
+        case TOK_WHILE_KW:
+            return parser_parse_while(parser);
 
         default:
         {

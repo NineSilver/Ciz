@@ -26,6 +26,8 @@ static tok_kind_t check_token_keyword(strview_t text)
         return TOK_ELSE_KW;
     else if(strview_compare(text, strview_from_arr_len("Int", 3)))
         return TOK_INT_KW;
+    else if(strview_compare(text, strview_from_arr_len("while", 5)))
+        return TOK_WHILE_KW;
     else
         return TOK_IDENTIFIER;
 }
