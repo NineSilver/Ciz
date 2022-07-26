@@ -40,12 +40,16 @@ static void generate_binary_expression(FILE* stream, generator_t* gen, ast_expre
 
         case TOK_STAR:
             fprintf(stream, "  mov rcx, rdx\n");
+            fprintf(stream, "  xor rdx, rdx\n");
             fprintf(stream, "  mul rcx\n");
             break;
 
         case TOK_SLASH:
+        case TOK_MODULO:
             fprintf(stream, "  mov rcx, rdx\n");
+            fprintf(stream, "  xor rdx, rdx\n");
             fprintf(stream, "  div rcx\n");
+            if(expression->binary.op == TOK_MODULO) fprintf(stream, "mov rax, rdx");
             break;
         
         default:

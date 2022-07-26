@@ -170,7 +170,7 @@ static ast_expression_t* parser_parse_expression_1(parser_t* parser)
 {
     ast_expression_t* left = parser_parse_expression_0(parser);
 
-    while(parser_current(parser).kind == TOK_STAR || parser_current(parser).kind == TOK_SLASH)
+    while(parser_current(parser).kind == TOK_STAR || parser_current(parser).kind == TOK_SLASH || parser_current(parser).kind == TOK_MODULO)
     {
         if(parser->state.inside_str_expr)
         {

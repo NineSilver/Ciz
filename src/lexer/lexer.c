@@ -176,6 +176,10 @@ token_t lexer_next_token(lexer_t* lexer)
                 return token_create(TOK_NOTEQ, strview_from_arr_len("!=", 2), line, column);
             }
             break;
+        
+        case '%':
+            lexer_advance(lexer);
+            return token_create(TOK_MODULO, strview_from_arr_len("%", 1), line, column);
 
         case '\0':
             return token_create(TOK_EOF, strview_from_arr_len(NULL, 0), line, column);

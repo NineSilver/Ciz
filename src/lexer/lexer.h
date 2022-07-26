@@ -28,6 +28,8 @@ typedef enum tok_kind
     TOK_STAR,
     TOK_SLASH,
 
+    TOK_MODULO,
+
     TOK_ASSIGN,
     TOK_EQUALS,
     TOK_NOTEQ,
