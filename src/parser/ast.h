@@ -73,6 +73,7 @@ typedef enum ast_stmnt_type
     AST_STMNT_RET,
 
     AST_STMNT_VAR_DECL,
+    AST_STMNT_ASM,
 
     AST_STMNT_IF,
     AST_STMNT_WHILE,
@@ -104,6 +105,12 @@ struct ast_statement
             size_t idx;
             ast_expression_t* value;
         } var_decl;
+
+        struct
+        {
+            strview_t literal;
+        } _asm;
+        
 
         struct
         {

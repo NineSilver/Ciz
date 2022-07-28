@@ -166,6 +166,10 @@ static void generate_statement(FILE* stream, generator_t* gen, ast_statement_t* 
             generate_var_decl(stream, gen, statement);
             break;
 
+        case AST_STMNT_ASM:
+            fprintf(stream, "%.*s\n", (int)statement->_asm.literal.len, statement->_asm.literal.str);
+            break;
+
         case AST_STMNT_IF:
             generate_if(stream, gen, statement);
             break;
@@ -213,6 +217,8 @@ void codegen_nasm(const char* output, ast_program_t* root)
     if(!out) return;
 
     generator_t* gen = calloc(1, sizeof(generator_t));
+
+    fprintf(out, "bits 64\n\n");
 
     for(size_t i = 0; i < root->procnum; i++)
         generate_proc(out, gen, &root->procs[i]);

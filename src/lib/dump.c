@@ -3,12 +3,13 @@
 #include <data.h>
 #include <dump.h>
 
-static const char* tok_kind_to_str[25] = {
+static const char* tok_kind_to_str[27] = {
     [TOK_PROC_KW] = "proc keyword",
     [TOK_DO_KW] = "do keyword",
     [TOK_END_KW] = "end keyword",
     [TOK_RET_KW] = "ret keyword",
     [TOK_DIM_KW] = "dim keyword",
+    [TOK_ASM_KW] = "asm keyword",
     [TOK_IF_KW] = "if keyword",
     [TOK_ELSE_KW] = "else keyword",
     [TOK_WHILE_KW] = "while keyword",

@@ -290,6 +290,21 @@ static ast_statement_t* parser_parse_if(parser_t* parser)
     return if_st;
 }
 
+ast_statement_t* parser_parse_asm(parser_t* parser)
+{
+    parser_expect(parser, TOK_STRING);
+    parser_advance(parser);
+
+    ast_statement_t* asm_st = calloc(1, sizeof(ast_statement_t));
+    asm_st->type = AST_STMNT_ASM;
+    asm_st->_asm.literal = parser_current(parser).text;
+    
+    parser_advance(parser);
+    parser_eat(parser, TOK_SEMICOLON);
+    
+    return asm_st;
+}
+
 static ast_statement_t* parser_parse_var_decl(parser_t* parser)
 {
     parser_expect(parser, TOK_IDENTIFIER);
@@ -408,6 +423,9 @@ static ast_statement_t* parser_parse_statement(parser_t* parser)
         
         case TOK_DIM_KW:
             return parser_parse_var_decl(parser);
+        
+        case TOK_ASM_KW:
+            return parser_parse_asm(parser);
         
         case TOK_IF_KW:
             return parser_parse_if(parser);
