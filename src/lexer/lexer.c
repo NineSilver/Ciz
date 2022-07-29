@@ -54,12 +54,12 @@ lexer_t lexer_create(strview_t src)
     };
 }
 
-static char lexer_current(lexer_t* lexer)
+static inline char lexer_current(lexer_t* lexer)
 {
     return strview_at(lexer->src, lexer->pos);
 }
 
-static char lexer_peek(lexer_t* lexer, size_t off)
+static inline char lexer_peek(lexer_t* lexer, size_t off)
 {
     return strview_at(lexer->src, lexer->pos + off);
 }
@@ -171,13 +171,13 @@ token_t lexer_next_token(lexer_t* lexer)
             return token_create(TOK_SEMICOLON, strview_from_arr_len(";", 1), line, column);
         
         case '!':
-            if(lexer_peek(lexer, 1) == '=')
+            lexer_advance(lexer);
+            if(lexer_current(lexer) == '=')
             {
-                lexer_advance(lexer);
                 lexer_advance(lexer);
                 return token_create(TOK_NOTEQ, strview_from_arr_len("!=", 2), line, column);
             }
-            break;
+            return token_create(TOK_LOG_NOT, strview_from_arr_len("!", 1), line, column);
         
         case '%':
             lexer_advance(lexer);

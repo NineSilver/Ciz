@@ -26,6 +26,7 @@ typedef struct ast_value
 typedef enum ast_expr
 {
     AST_EXPR_VALUE,
+    AST_EXPR_UNARY,
     AST_EXPR_BINARY,
     AST_EXPR_ASSIGN,
     AST_EXPR_VAR_REF,
@@ -39,6 +40,12 @@ struct ast_expression
     union
     {
         ast_value_t value;
+
+        struct
+        {
+            tok_kind_t op;
+            ast_expression_t* expr;
+        } unary;
         
         struct
         {

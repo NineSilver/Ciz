@@ -3,7 +3,7 @@
 #include <data.h>
 #include <dump.h>
 
-static const char* tok_kind_to_str[27] = {
+static const char* tok_kind_to_str[28] = {
     [TOK_PROC_KW] = "proc keyword",
     [TOK_DO_KW] = "do keyword",
     [TOK_END_KW] = "end keyword",
@@ -29,6 +29,8 @@ static const char* tok_kind_to_str[27] = {
     [TOK_ASSIGN] = "assign",
     [TOK_EQUALS] = "equals",
     [TOK_NOTEQ] = "not equals",
+
+    [TOK_LOG_NOT] = "logical not",
 
     [TOK_LPAREN] = "left parentheses",
     [TOK_RPAREN] = "right parentheses",

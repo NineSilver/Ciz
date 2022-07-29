@@ -35,6 +35,8 @@ typedef enum tok_kind
     TOK_EQUALS,
     TOK_NOTEQ,
 
+    TOK_LOG_NOT,
+
     TOK_LPAREN,
     TOK_RPAREN,
     TOK_SEMICOLON,

@@ -168,37 +168,29 @@ static ast_expression_t* parser_parse_expression_0(parser_t* parser)
 
 static ast_expression_t* parser_parse_expression_1(parser_t* parser)
 {
-    ast_expression_t* left = parser_parse_expression_0(parser);
-
-    while(parser_current(parser).kind == TOK_STAR || parser_current(parser).kind == TOK_SLASH || parser_current(parser).kind == TOK_MODULO)
+    token_t current = parser_current(parser);
+    switch(current.kind)
     {
-        if(parser->state.inside_str_expr)
+        case TOK_LOG_NOT:
         {
-            fprintf(stderr, "ERROR: string literal may not be followed by a numeric operator (%lu:%lu)\n", parser_current(parser).line, parser_current(parser).column);
-            exit(-1);
+            ast_expression_t* expression = calloc(1, sizeof(ast_expression_t));
+            expression->type = AST_EXPR_UNARY;
+            expression->unary.op = current.kind;
+            parser_advance(parser);
+            expression->unary.expr = parser_parse_expression_0(parser);
+            return expression;
         }
 
-        tok_kind_t op = parser_current(parser).kind;
-        parser_advance(parser);
-
-        ast_expression_t* right = parser_parse_expression_0(parser);
-
-        ast_expression_t* expr = calloc(1, sizeof(ast_expression_t));
-        expr->type = AST_EXPR_BINARY;
-        expr->binary.left = left;
-        expr->binary.right = right;
-        expr->binary.op = op;
-
-        left = expr;
+        default:
+            return parser_parse_expression_0(parser);
     }
-
-    return left;
 }
 
 static ast_expression_t* parser_parse_expression_2(parser_t* parser)
 {
     ast_expression_t* left = parser_parse_expression_1(parser);
-    while(parser_current(parser).kind == TOK_PLUS || parser_current(parser).kind == TOK_MINUS)
+
+    while(parser_current(parser).kind == TOK_STAR || parser_current(parser).kind == TOK_SLASH || parser_current(parser).kind == TOK_MODULO)
     {
         if(parser->state.inside_str_expr)
         {
@@ -226,7 +218,7 @@ static ast_expression_t* parser_parse_expression_2(parser_t* parser)
 static ast_expression_t* parser_parse_expression_3(parser_t* parser)
 {
     ast_expression_t* left = parser_parse_expression_2(parser);
-    while(parser_current(parser).kind == TOK_EQUALS || parser_current(parser).kind == TOK_NOTEQ)
+    while(parser_current(parser).kind == TOK_PLUS || parser_current(parser).kind == TOK_MINUS)
     {
         if(parser->state.inside_str_expr)
         {
@@ -238,6 +230,34 @@ static ast_expression_t* parser_parse_expression_3(parser_t* parser)
         parser_advance(parser);
 
         ast_expression_t* right = parser_parse_expression_2(parser);
+
+        ast_expression_t* expr = calloc(1, sizeof(ast_expression_t));
+        expr->type = AST_EXPR_BINARY;
+        expr->binary.left = left;
+        expr->binary.right = right;
+        expr->binary.op = op;
+
+        left = expr;
+    }
+
+    return left;
+}
+
+static ast_expression_t* parser_parse_expression_4(parser_t* parser)
+{
+    ast_expression_t* left = parser_parse_expression_3(parser);
+    while(parser_current(parser).kind == TOK_EQUALS || parser_current(parser).kind == TOK_NOTEQ)
+    {
+        if(parser->state.inside_str_expr)
+        {
+            fprintf(stderr, "ERROR: string literal may not be followed by a numeric operator (%lu:%lu)\n", parser_current(parser).line, parser_current(parser).column);
+            exit(-1);
+        }
+
+        tok_kind_t op = parser_current(parser).kind;
+        parser_advance(parser);
+
+        ast_expression_t* right = parser_parse_expression_3(parser);
 
         ast_expression_t* expr = calloc(1, sizeof(ast_expression_t));
         expr->type = AST_EXPR_EQUALS;
@@ -253,7 +273,7 @@ static ast_expression_t* parser_parse_expression_3(parser_t* parser)
 
 static ast_expression_t* parser_parse_expression(parser_t* parser)
 {
-    ast_expression_t* expr = parser_parse_expression_3(parser);
+    ast_expression_t* expr = parser_parse_expression_4(parser);
     parser->state.inside_str_expr = 0;
     return expr;
 }
