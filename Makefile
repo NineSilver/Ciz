@@ -12,15 +12,17 @@ all: release
 
 .PHONY: debug
 debug: CFLAGS += -g -O0
+debug: LDFLAGS += -g -O0
 debug: $(BIN)
 
 .PHONY: release
 release: CFLAGS += -Ofast
+release: LDFLAGS += -Ofast
 release: $(BIN)
 
 $(BIN): $(OBJS)
 	@echo " [LD] $@"
-	@${CC} $^ -o $@
+	@${CC} $(LDFLAGS) -o $@ $^
 
 %.o: %.c
 	@echo " [CC] $<"
