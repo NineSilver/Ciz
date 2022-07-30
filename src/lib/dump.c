@@ -115,11 +115,35 @@ static void dump_expression(FILE* stream, ast_expression_t* expression, size_t i
             dump_value(stream, expression->value, indent);
             break;
 
+        case AST_EXPR_UNARY:
+            do_indent(stream, indent);
+            fprintf(stream, "-> %s\n", op_to_sign(expression->unary.op));
+            dump_expression(stream, expression->unary.expr, indent + 2);
+            break;
+
         case AST_EXPR_BINARY:
             do_indent(stream, indent);
             fprintf(stream, "-> %s\n", op_to_sign(expression->binary.op));
             dump_expression(stream, expression->binary.left, indent + 2);
             dump_expression(stream, expression->binary.right, indent + 2);
+            break;
+
+        case AST_EXPR_ASSIGN:
+            do_indent(stream, indent);
+            fprintf(stream, "-> Assign %lu\n", expression->assign.var_idx);
+            dump_expression(stream, expression->assign.new_value, indent + 2);
+            break;
+
+        case AST_EXPR_VAR_REF:
+            do_indent(stream, indent);
+            fprintf(stream, "-> Ref %lu\n", expression->var_ref.idx);
+            break;
+
+        case AST_EXPR_EQUALS:
+            do_indent(stream, indent);
+            fprintf(stream, "-> %sEq\n", expression->equals.reverse ? "Not " : "");
+            dump_expression(stream, expression->equals.left, indent + 2);
+            dump_expression(stream, expression->equals.right, indent + 2);
             break;
 
         default:
@@ -151,6 +175,11 @@ static void dump_statement(FILE* stream, ast_statement_t* statement, size_t inde
             dump_expression(stream, statement->var_decl.value, indent + 2);
             break;
 
+        case AST_STMNT_ASM:
+            do_indent(stream, indent);
+            fprintf(stream, "-> Asm: %.*s\n", (int)statement->_asm.literal.len, statement->_asm.literal.str);
+            break;
+
         case AST_STMNT_IF:
             do_indent(stream, indent);
             fprintf(stream, "-> if\n");
@@ -162,6 +191,13 @@ static void dump_statement(FILE* stream, ast_statement_t* statement, size_t inde
                 fprintf(stream, "-> else\n");
                 dump_statement(stream, statement->_if._else, indent + 2);
             }
+            break;
+
+        case AST_STMNT_WHILE:
+            do_indent(stream, indent);
+            fprintf(stream, "-> while\n");
+            dump_expression(stream, statement->_while.cond, indent + 2);
+            dump_statement(stream, statement->_while.body, indent);
             break;
 
         case AST_STMNT_EXPR:
