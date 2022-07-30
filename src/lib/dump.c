@@ -58,6 +58,18 @@ static const char* op_to_sign(tok_kind_t op)
 
         case TOK_SLASH:
             return "/";
+
+        case TOK_EQUALS:
+            return "==";
+
+        case TOK_NOTEQ:
+            return "!=";
+
+        case TOK_MODULO:
+            return "%";
+        
+        case TOK_LOG_NOT:
+            return "!";
         
         default:
             return "no-op";
@@ -137,13 +149,6 @@ static void dump_expression(FILE* stream, ast_expression_t* expression, size_t i
         case AST_EXPR_VAR_REF:
             do_indent(stream, indent);
             fprintf(stream, "-> Ref %lu\n", expression->var_ref.idx);
-            break;
-
-        case AST_EXPR_EQUALS:
-            do_indent(stream, indent);
-            fprintf(stream, "-> %sEq\n", expression->equals.reverse ? "Not " : "");
-            dump_expression(stream, expression->equals.left, indent + 2);
-            dump_expression(stream, expression->equals.right, indent + 2);
             break;
 
         default:

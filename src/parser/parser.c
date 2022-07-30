@@ -260,10 +260,10 @@ static ast_expression_t* parser_parse_expression_4(parser_t* parser)
         ast_expression_t* right = parser_parse_expression_3(parser);
 
         ast_expression_t* expr = calloc(1, sizeof(ast_expression_t));
-        expr->type = AST_EXPR_EQUALS;
-        expr->equals.left = left;
-        expr->equals.right = right;
-        expr->equals.reverse = (op == TOK_EQUALS) ? 0 : 1;
+        expr->type = AST_EXPR_BINARY;
+        expr->binary.left = left;
+        expr->binary.right = right;
+        expr->binary.op = op;
 
         left = expr;
     }

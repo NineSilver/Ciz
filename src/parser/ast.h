@@ -29,8 +29,7 @@ typedef enum ast_expr
     AST_EXPR_UNARY,
     AST_EXPR_BINARY,
     AST_EXPR_ASSIGN,
-    AST_EXPR_VAR_REF,
-    AST_EXPR_EQUALS
+    AST_EXPR_VAR_REF
 } ast_expr_type_t;
 
 typedef struct ast_expression ast_expression_t;
@@ -64,13 +63,6 @@ struct ast_expression
         {
             size_t idx;
         } var_ref;
-        
-        struct
-        {
-            int reverse;
-            ast_expression_t* left;
-            ast_expression_t* right;
-        } equals;
     };
 };
 

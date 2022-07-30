@@ -65,6 +65,22 @@ static void generate_binary_expression(FILE* stream, generator_t* gen, ast_expre
             fprintf(stream, "  div rcx\n");
             if(expression->binary.op == TOK_MODULO) fprintf(stream, "mov rax, rdx");
             break;
+
+        case TOK_EQUALS:
+        case TOK_NOTEQ:
+            fprintf(stream, "  push rdx\n");
+            generate_expression(stream, gen, expression->binary.right);
+            fprintf(stream, "  mov rdx, rax\n");
+            generate_expression(stream, gen, expression->binary.left);
+            fprintf(stream, "  mov rcx, rax\n");
+            fprintf(stream, "  xor rax, rax\n");
+            fprintf(stream, "  cmp rcx, rdx\n");
+            if(expression->binary.op == TOK_NOTEQ) fprintf(stream, "  je .lbl_%lu\n", gen->curr_proc->label_num);
+            else fprintf(stream, "  jne .lbl_%lu\n", gen->curr_proc->label_num);
+            fprintf(stream, "  inc rax\n");
+            fprintf(stream, ".lbl_%lu:\n", gen->curr_proc->label_num++);
+            fprintf(stream, "  pop rdx\n");
+            break;
         
         default:
             fprintf(stderr, "ERROR: unknown operand \"%s\"\n", token_kind_to_str(expression->binary.op));
@@ -97,21 +113,6 @@ static void generate_expression(FILE* stream, generator_t* gen, ast_expression_t
         
         case AST_EXPR_VAR_REF:
             fprintf(stream, "  mov rax, [rbp + %d]\n", gen->curr_ctx->offsets[expression->var_ref.idx]);
-            break;
-
-        case AST_EXPR_EQUALS:
-            fprintf(stream, "  push rdx\n");
-            generate_expression(stream, gen, expression->equals.right);
-            fprintf(stream, "  mov rdx, rax\n");
-            generate_expression(stream, gen, expression->equals.left);
-            fprintf(stream, "  mov rcx, rax\n");
-            fprintf(stream, "  xor rax, rax\n");
-            fprintf(stream, "  cmp rcx, rdx\n");
-            if(expression->equals.reverse) fprintf(stream, "  je .lbl_%lu\n", gen->curr_proc->label_num);
-            else fprintf(stream, "  jne .lbl_%lu\n", gen->curr_proc->label_num);
-            fprintf(stream, "  inc rax\n");
-            fprintf(stream, ".lbl_%lu:\n", gen->curr_proc->label_num++);
-            fprintf(stream, "  pop rdx\n");
             break;
 
         default:
