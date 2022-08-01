@@ -162,7 +162,7 @@ static ast_expression_t* parser_parse_expression_0(parser_t* parser)
         }
         
         default:
-            fprintf(stderr, "TODO %s %lu:%lu\n", token_kind_to_str(current.kind), current.line, current.column);
+            fprintf(stderr, "ERROR: expected expression at %lu:%lu\n", token_kind_to_str(current.kind), current.line, current.column);
             exit(-1);
     }
 }
