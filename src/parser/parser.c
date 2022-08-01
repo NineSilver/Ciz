@@ -95,14 +95,14 @@ static datatype_t expression_type(context_t* ctx, ast_expression_t* expression)
 }
 
 static ast_expression_t* parser_parse_expression(parser_t* parser);
-static ast_expression_t* parser_parse_expression_3(parser_t* parser);
+static ast_expression_t* parser_parse_expression_5(parser_t* parser);
 
 static ast_expression_t* parser_parse_expression_0(parser_t* parser)
 {
     if(parser_current(parser).kind == TOK_LPAREN)
     {
         parser_advance(parser);
-        ast_expression_t* expr = parser_parse_expression_3(parser);
+        ast_expression_t* expr = parser_parse_expression_5(parser);
         parser_eat(parser, TOK_RPAREN);
 
         return expr;
@@ -140,6 +140,7 @@ static ast_expression_t* parser_parse_expression_0(parser_t* parser)
             parser_advance(parser);
             if(parser_current(parser).kind == TOK_ASSIGN)
             {
+                parser_advance(parser);
                 ast_expression_t* new = parser_parse_expression(parser);
                 datatype_t expr_type = expression_type(parser->state.current_ctx, new);
                 if(type != expr_type)
@@ -161,7 +162,7 @@ static ast_expression_t* parser_parse_expression_0(parser_t* parser)
         }
         
         default:
-            fprintf(stderr, "TODO %s\n", token_kind_to_str(current.kind));
+            fprintf(stderr, "TODO %s %lu:%lu\n", token_kind_to_str(current.kind), current.line, current.column);
             exit(-1);
     }
 }
@@ -248,12 +249,6 @@ static ast_expression_t* parser_parse_expression_4(parser_t* parser)
     ast_expression_t* left = parser_parse_expression_3(parser);
     while(parser_current(parser).kind == TOK_EQUALS || parser_current(parser).kind == TOK_NOTEQ)
     {
-        if(parser->state.inside_str_expr)
-        {
-            fprintf(stderr, "ERROR: string literal may not be followed by a numeric operator (%lu:%lu)\n", parser_current(parser).line, parser_current(parser).column);
-            exit(-1);
-        }
-
         tok_kind_t op = parser_current(parser).kind;
         parser_advance(parser);
 
@@ -271,9 +266,31 @@ static ast_expression_t* parser_parse_expression_4(parser_t* parser)
     return left;
 }
 
+static ast_expression_t* parser_parse_expression_5(parser_t* parser)
+{
+    ast_expression_t* left = parser_parse_expression_4(parser);
+    while(parser_current(parser).kind == TOK_LOG_AND || parser_current(parser).kind == TOK_LOG_OR)
+    {
+        tok_kind_t op = parser_current(parser).kind;
+        parser_advance(parser);
+
+        ast_expression_t* right = parser_parse_expression_4(parser);
+
+        ast_expression_t* expr = calloc(1, sizeof(ast_expression_t));
+        expr->type = AST_EXPR_BINARY;
+        expr->binary.left = left;
+        expr->binary.right = right;
+        expr->binary.op = op;
+
+        left = expr;
+    }
+
+    return left;
+}
+
 static ast_expression_t* parser_parse_expression(parser_t* parser)
 {
-    ast_expression_t* expr = parser_parse_expression_4(parser);
+    ast_expression_t* expr = parser_parse_expression_5(parser);
     parser->state.inside_str_expr = 0;
     return expr;
 }

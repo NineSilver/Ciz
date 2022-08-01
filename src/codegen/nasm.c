@@ -63,15 +63,11 @@ static void generate_binary_expression(FILE* stream, generator_t* gen, ast_expre
             fprintf(stream, "  mov rcx, rdx\n");
             fprintf(stream, "  xor rdx, rdx\n");
             fprintf(stream, "  div rcx\n");
-            if(expression->binary.op == TOK_MODULO) fprintf(stream, "mov rax, rdx");
+            if(expression->binary.op == TOK_MODULO) fprintf(stream, "mov rax, rdx\n");
             break;
 
         case TOK_EQUALS:
         case TOK_NOTEQ:
-            fprintf(stream, "  push rdx\n");
-            generate_expression(stream, gen, expression->binary.right);
-            fprintf(stream, "  mov rdx, rax\n");
-            generate_expression(stream, gen, expression->binary.left);
             fprintf(stream, "  mov rcx, rax\n");
             fprintf(stream, "  xor rax, rax\n");
             fprintf(stream, "  cmp rcx, rdx\n");
@@ -79,8 +75,37 @@ static void generate_binary_expression(FILE* stream, generator_t* gen, ast_expre
             else fprintf(stream, "  jne .lbl_%lu\n", gen->curr_proc->label_num);
             fprintf(stream, "  inc rax\n");
             fprintf(stream, ".lbl_%lu:\n", gen->curr_proc->label_num++);
-            fprintf(stream, "  pop rdx\n");
             break;
+        
+        case TOK_LOG_AND:
+        {
+            fprintf(stream, "  mov rcx, rax\n");
+            fprintf(stream, "  xor rax, rax\n");
+            fprintf(stream, "  test rdx, rdx\n");
+            size_t end = gen->curr_proc->label_num++;
+            fprintf(stream, "  jz .lbl_%lu\n", end);
+            fprintf(stream, "  test rcx, rcx\n");
+            fprintf(stream, "  jz .lbl_%lu\n", end);
+            fprintf(stream, "  inc rax\n");
+            fprintf(stream, ".lbl_%lu:\n", end);
+            break;
+        }
+
+        case TOK_LOG_OR:
+        {
+            fprintf(stream, "  mov rcx, rax\n");
+            fprintf(stream, "  xor rax, rax\n");
+            fprintf(stream, "  test rdx, rdx\n");
+            size_t inc = gen->curr_proc->label_num++;
+            size_t end = gen->curr_proc->label_num++;
+            fprintf(stream, "  jnz .lbl_%lu\n", inc);
+            fprintf(stream, "  test rcx, rcx\n");
+            fprintf(stream, "  jz .lbl_%lu\n", end);
+            fprintf(stream, ".lbl_%lu:\n", inc);
+            fprintf(stream, "  inc rax\n");
+            fprintf(stream, ".lbl_%lu:\n", end);
+            break;
+        }
         
         default:
             fprintf(stderr, "ERROR: unknown operand \"%s\"\n", token_kind_to_str(expression->binary.op));
@@ -125,7 +150,7 @@ static void generate_ret(FILE* stream, generator_t* gen, ast_statement_t* statem
 {
     if(statement->ret.expr) generate_expression(stream, gen, statement->ret.expr);
 
-    fprintf(stream, "  jmp .%.*s_leave\n", (int)gen->curr_proc->name.len, gen->curr_proc->name.str);
+    fprintf(stream, "  jmp .leave\n");
 }
 
 static void generate_var_decl(FILE* stream, generator_t* gen, ast_statement_t* statement)
@@ -144,18 +169,21 @@ static void generate_if(FILE* stream, generator_t* gen, ast_statement_t* stateme
 {
     generate_expression(stream, gen, statement->_if.cond);
     fprintf(stream, "  test rax, rax\n");
-    fprintf(stream, "  jz .lbl_%lu\n", gen->curr_proc->label_num);
+    size_t end = gen->curr_proc->label_num++;
+    fprintf(stream, "  jz .lbl_%lu\n", end);
     generate_statement(stream, gen, statement->_if.body);
 
     if(statement->_if._else)
     {
-        fprintf(stream, "  jmp .lbl_%lu\n", gen->curr_proc->label_num + 1);
-        fprintf(stream, ".lbl_%lu:\n", gen->curr_proc->label_num++);
+        size_t new_end = gen->curr_proc->label_num++;
+        fprintf(stream, "  jmp .lbl_%lu\n", new_end);
+        fprintf(stream, ".lbl_%lu:\n", end);
+        end = new_end;
 
         generate_statement(stream, gen, statement->_if._else);
     }
 
-    fprintf(stream, ".lbl_%lu:\n", gen->curr_proc->label_num++);
+    fprintf(stream, ".lbl_%lu:\n", end);
 }
 
 static void generate_while(FILE* stream, generator_t* gen, ast_statement_t* statement)
@@ -198,6 +226,10 @@ static void generate_statement(FILE* stream, generator_t* gen, ast_statement_t* 
         case AST_STMNT_WHILE:
             generate_while(stream, gen, statement);
             break;
+        
+        case AST_STMNT_EXPR:
+            generate_expression(stream, gen, statement->expr);
+            break;
 
         default:
             fprintf(stderr, "ERROR: statement type %d generation is not implemented\n", statement->type);
@@ -222,7 +254,7 @@ static void generate_proc(FILE* stream, generator_t* gen, ast_proc_t* proc)
 
     generate_statement(stream, gen, proc->body);
     
-    fprintf(stream, ".%.*s_leave:\n", (int)proc->name.len, proc->name.str);
+    fprintf(stream, ".leave:\n");
     if(proc->ctx->decl_num)
     {
         fprintf(stream, "  mov rsp, rbp\n");

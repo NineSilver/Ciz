@@ -3,7 +3,7 @@
 #include <data.h>
 #include <dump.h>
 
-static const char* tok_kind_to_str[28] = {
+static const char* tok_kind_to_str[30] = {
     [TOK_PROC_KW] = "proc keyword",
     [TOK_DO_KW] = "do keyword",
     [TOK_END_KW] = "end keyword",
@@ -31,6 +31,8 @@ static const char* tok_kind_to_str[28] = {
     [TOK_NOTEQ] = "not equals",
 
     [TOK_LOG_NOT] = "logical not",
+    [TOK_LOG_AND] = "logical and",
+    [TOK_LOG_OR] = "logical or",
 
     [TOK_LPAREN] = "left parentheses",
     [TOK_RPAREN] = "right parentheses",
@@ -70,6 +72,12 @@ static const char* op_to_sign(tok_kind_t op)
         
         case TOK_LOG_NOT:
             return "!";
+        
+        case TOK_LOG_AND:
+            return "and";
+
+        case TOK_LOG_OR:
+            return "or";
         
         default:
             return "no-op";
